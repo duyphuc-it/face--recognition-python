@@ -47,7 +47,7 @@ class MainUI(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         self.frames = {}
-        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour):
+        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour, PageFive):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -76,11 +76,13 @@ class StartPage(tk.Frame):
             label = tk.Label(self, text="        Home Page        ", font=self.controller.title_font,fg="#263942")
             label.grid(row=0, sticky="ew")
             button1 = tk.Button(self, text="   Add a User  ", fg="#ffffff", bg="#263942",command=lambda: self.controller.show_frame("PageOne"))
+            button4 = tk.Button(self, text="   Train Data  ", fg="#ffffff", bg="#263942",command=lambda: self.controller.show_frame("PageFive"))
             button2 = tk.Button(self, text="   Check a User  ", fg="#ffffff", bg="#263942",command=lambda: self.controller.show_frame("PageTwo"))
             button3 = tk.Button(self, text="Quit", fg="#263942", bg="#ffffff", command=self.on_closing)
-            button1.grid(row=1, column=0, ipady=3, ipadx=7)
-            button2.grid(row=2, column=0, ipady=3, ipadx=2)
-            button3.grid(row=3, column=0, ipady=3, ipadx=32)
+            button1.grid(row=1, column=0, ipady=2, ipadx=7)
+            button4.grid(row=2, column=0, ipady=2, ipadx=7)
+            button2.grid(row=3, column=0, ipady=2, ipadx=7)
+            button3.grid(row=4, column=0, ipady=2, ipadx=7)
 
 
         def on_closing(self):
@@ -136,7 +138,14 @@ class PageTwo(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        global names
+
+        attendance = pd.read_excel(".\Attendance\L06.xlsx");
+        userTrain = attendance.loc[attendance['Train Data'] == 1, ['Name']]['Name'].tolist();
+        
+        if len(userTrain) == 0:
+            userTrain = [' ']
+
+        # global names
         self.controller = controller
         date_object = datetime.date.today()
         label = tk.Label(self, text="Date :", fg="#263942" , font='Helvetica 12 bold').grid(row=0, column=2, padx=10, pady=10)
@@ -144,7 +153,7 @@ class PageTwo(tk.Frame):
         tk.Label(self, text="Select user", fg="#263942", font='Helvetica 12 bold').grid(row=0, column=0, padx=10, pady=10)
         self.buttoncanc = tk.Button(self, text="Cancel", command=lambda: controller.show_frame("StartPage"), bg="#ffffff", fg="#263942")
         self.menuvar = tk.StringVar(self)
-        self.dropdown = tk.OptionMenu(self, self.menuvar, *names)
+        self.dropdown = tk.OptionMenu(self, self.menuvar, *userTrain)
         self.dropdown.config(bg="lightgrey")
         self.dropdown["menu"].config(bg="lightgrey")
         self.buttonext = tk.Button(self, text="Next", command=self.nextfoo, fg="#ffffff", bg="#263942")
@@ -225,6 +234,41 @@ class PageFour(tk.Frame):
     #def emot(self):
      #   emotion()
 
+class PageFive(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        label = tk.Label(self, text="Train Data", font='Helvetica 16 bold')
+        # self.new_user_name = tk.Entry(self, borderwidth=3, bg="lightgrey", font='Helvetica 11')
+        # self.new_user_name.grid(row=0, column=1, pady=10, padx=10)
+
+        attendance = pd.read_excel(".\Attendance\L06.xlsx");
+        userNoTrain = attendance.loc[attendance['Train Data'] == 0, ['Name']]['Name'].tolist();
+        print(userNoTrain)
+        if len(userNoTrain) == 0:
+            userNoTrain = [" "]
+        # fileName=".\Attendance\L06.xlsx"
+        # writer = pd.ExcelWriter(fileName,engine='xlsxwriter');
+        # attendance.to_excel(writer, engine='xlsxwriter', index=False)
+        # writer.save();
+
+
+        self.user_name = tk.StringVar(self)
+        tk.Label(self, text="Select one name", fg="#263942", font='Helvetica 12 bold').grid(row=1, column=0, pady=10, padx=5)
+        self.dropdown = tk.OptionMenu(self, self.user_name, *userNoTrain)
+        self.dropdown.config(bg="lightgrey")
+        self.dropdown["menu"].config(bg="lightgrey")
+        self.dropdown.grid(row=1, column=1, ipadx=8, padx=10, pady=10)
+
+        self.buttoncanc = tk.Button(self, text="Cancel", bg="#ffffff", fg="#263942", command=lambda: controller.show_frame("StartPage"))
+        self.buttonext = tk.Button(self, text="Next", fg="#ffffff", bg="#263942", command=self.start_training)
+        self.buttoncanc.grid(row=2, column=0, pady=10, ipadx=5, ipady=4)
+        self.buttonext.grid(row=2, column=1, pady=10, ipadx=5, ipady=4)
+    def start_training(self):
+        name = self.user_name.get()
+        self.controller.active_name = name
+        self.controller.frames["PageTwo"].refresh_names()
+        self.controller.show_frame("PageThree")
 
 
 app = MainUI()
